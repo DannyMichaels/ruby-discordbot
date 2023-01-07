@@ -5,6 +5,7 @@ require 'dotenv/load'
 
 require 'discordrb'
 
+
 # This statement creates a bot with the specified token and application ID. After this line, you can add events to the
 # created bot, and eventually run it.
 #
@@ -81,6 +82,72 @@ def rock_paper_scissors(user_move, message)
   else 
     return "I win!"
   end
+end
+
+
+# Start the game by typing "!game" in chat.
+bot.command(:guess) do |event|
+  # Pick a number between 1 and 10
+  magic = rand(1..10)
+
+  puts("Magic number is #{magic}")
+  # Await a MessageEvent specifically from the invoking user.
+  #
+  # Note that since the identifier I'm using here is `:guess`,
+  # only one person can be playing at one time. You can otherwise
+  # interpolate something into a symbol to have multiple awaits
+  # for this "command" available at the same time.
+  event.user.await(:guess) do |guess_event|
+    # Their message is a string - cast it to an integer
+    guess = guess_event.message.content.to_i
+
+    # If the block returns anything that *isn't* `false`, then the
+    # event handler will persist and continue to handle messages.
+    if guess == magic
+      # This returns `nil`, which will destroy the await so we don't reply anymore
+      guess_event.respond 'you win!'
+    else
+      # Let the user know if they guessed too high or low.
+      guess_event.respond(guess > magic ? 'too high' : 'too low')
+
+      # Return false so the await is not destroyed, and we continue to listen
+      false
+    end
+  end
+
+  # Let the user know we're  ready and listening..
+  event.respond 'Guess a number between 1 and 10..'
+end
+
+bot.command(:about) do |event|
+  event.respond 'I am a bot made by <@1045871493587939379> using Ruby, I will play fun games with you!. I am currently in development.'
+end
+
+
+bot.command(:connect) do |event|
+  # The `voice_channel` method returns the voice channel the user is currently in, or `nil` if the user is not in a
+  # voice channel.
+  channel = event.user.voice_channel
+
+  # Here we return from the command unless the channel is not nil (i. e. the user is in a voice channel). The `next`
+  # construct can be used to exit a command prematurely, and even send a message while we're at it.
+  next "You're not in any voice channel!" unless channel
+
+  # The `voice_connect` method does everything necessary for the bot to connect to a voice channel. Afterwards the bot
+  # will be connected and ready to play stuff back.
+  bot.voice_connect(channel)
+  "Connected to voice channel: #{channel.name}"
+end
+
+# A simple command that plays back an mp3 file.
+bot.command(:play_mp3) do |event|
+  # `event.voice` is a helper method that gets the correct voice bot on the server the bot is currently in. Since a
+  # bot may be connected to more than one voice channel (never more than one on the same server, though), this is
+  # necessary to allow the differentiation of servers.
+  #
+  # It returns a `VoiceBot` object that methods such as `play_file` can be called on.
+  voice_bot = event.voice
+  voice_bot.play_file('./music.mp3')
 end
 
 # This method call has to be put at the end of your script, it is what makes the bot actually connect to Discord. If you
