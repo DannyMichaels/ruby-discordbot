@@ -52,9 +52,6 @@ bot.command(:random, min_args: 0, max_args: 2, description: 'Generates a random 
   end
 end
 
-
-
-
 bot.command(:rps) do |event, *args| 
   #rock paper scissor
   moves = ["rock", "scissors", "paper"]
